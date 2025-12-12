@@ -3,29 +3,29 @@ package config
 import "github.com/spf13/viper"
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Logger   LoggerConfig
-	Auth     AuthConfig
+	Server   ServerConfig   `mapstructure:"server"`
+	Database DatabaseConfig `mapstructure:"database"`
+	Logger   LoggerConfig   `mapstructure:"logger"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 }
 
 type ServerConfig struct {
-	Port string
-	Mode string
+	Port string `mapstructure:"port"`
+	Mode string `mapstructure:"mode"`
 }
 
 type DatabaseConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
+	Host     string `mapstructure:"host"`
+	Port     string `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
+	SSLMode  string `mapstructure:"sslmode"`
 }
 
 type LoggerConfig struct {
-	Level  string
-	SeqURL string
+	Level  string `mapstructure:"level"`
+	SeqURL string `mapstructure:"seq_url"`
 }
 
 type AuthConfig struct {
