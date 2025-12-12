@@ -19,7 +19,6 @@ func (r *UsersRepo) Create(user *domain.User) error {
 
 func (r *UsersRepo) GetByEmail(email string) (*domain.User, error) {
 	var user domain.User
-	// Preload Profile, чтобы сразу получить данные профиля, если они есть
 	err := r.db.Preload("Profile").Where("email = ?", email).First(&user).Error
 	return &user, err
 }

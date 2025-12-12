@@ -28,3 +28,17 @@ func (s *CategoriesService) GetByID(id uint) (domain.Category, error) {
 	}
 	return *cat, nil
 }
+
+func (s *CategoriesService) Update(id uint, category domain.Category) error {
+	_, err := s.repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+
+	category.ID = id
+	return s.repo.Update(&category)
+}
+
+func (s *CategoriesService) Delete(id uint) error {
+	return s.repo.Delete(id)
+}

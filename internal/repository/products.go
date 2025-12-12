@@ -19,7 +19,6 @@ func (r *ProductsRepo) Create(product *domain.Product) error {
 
 func (r *ProductsRepo) GetAll() ([]domain.Product, error) {
 	var products []domain.Product
-	// Жадная загрузка (Eager Loading) связанной сущности Category
 	err := r.db.Preload("Category").Find(&products).Error
 	return products, err
 }

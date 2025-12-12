@@ -21,7 +21,6 @@ func NewHandler(services *service.Service, logger *zerolog.Logger) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	// Используем встроенный логгер Gin'а (можно заменить на свой middleware, но пока хватит стандартного)
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
@@ -41,7 +40,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			products.POST("/", h.createProduct)
 			products.GET("/", h.getAllProducts)
 			products.GET("/:id", h.getProductById)
-			products.PUT("/:id", h.updateProduct)
+			products.PATCH("/:id", h.updateProduct)
 			products.DELETE("/:id", h.deleteProduct)
 		}
 
@@ -52,11 +51,14 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			orders.GET("/", h.getAllOrders)
 		}
 
-		// Категории (упрощенно)
+		// Категории
 		categories := api.Group("/categories")
 		{
 			categories.POST("/", h.createCategory)
 			categories.GET("/", h.getAllCategories)
+			categories.GET("/:id", h.getCategoryById)
+			categories.PUT("/:id", h.updateCategory)
+			categories.DELETE("/:id", h.deleteCategory)
 		}
 	}
 

@@ -16,6 +16,14 @@ type createProductInput struct {
 	CategoryID  uint    `json:"category_id" binding:"required"`
 }
 
+type updateProductInput struct {
+	Name        *string  `json:"name"`
+	Description *string  `json:"description"`
+	Price       *float64 `json:"price" binding:"omitempty,gt=0"`
+	Stock       *int     `json:"stock" binding:"omitempty,gte=0"`
+	CategoryID  *uint    `json:"category_id"`
+}
+
 func (h *Handler) createProduct(c *gin.Context) {
 	var input createProductInput
 	if err := c.BindJSON(&input); err != nil {
@@ -59,28 +67,47 @@ func (h *Handler) getProductById(c *gin.Context) {
 }
 
 func (h *Handler) updateProduct(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	var input createProductInput // Используем ту же структуру для простоты
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		return
+	}
 
+	var input updateProductInput
 	if err := c.BindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := h.services.Products.Update(uint(id), domain.Product{
-		Name:        input.Name,
-		Description: input.Description,
-		Price:       input.Price,
-		CategoryID:  input.CategoryID,
-		Stock:       input.Stock,
-	})
+	existingProduct, err := h.services.Products.GetByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
 
+	if input.Name != nil {
+		existingProduct.Name = *input.Name
+	}
+	if input.Description != nil {
+		existingProduct.Description = *input.Description
+	}
+	if input.Price != nil {
+		existingProduct.Price = *input.Price
+	}
+	if input.Stock != nil {
+		existingProduct.Stock = *input.Stock
+	}
+	if input.CategoryID != nil {
+		existingProduct.CategoryID = *input.CategoryID
+	}
+
+	err = h.services.Products.Update(uint(id), existingProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "updated"})
+	c.JSON(http.StatusOK, gin.H{"status": "updated", "product": existingProduct})
 }
 
 func (h *Handler) deleteProduct(c *gin.Context) {

@@ -31,14 +31,12 @@ func (h *Handler) userIdentity(c *gin.Context) {
 		return
 	}
 
-	// Парсим токен через сервис
 	userId, role, err := h.services.Authorization.ParseToken(headerParts[1])
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Записываем данные в контекст, чтобы хендлеры могли их использовать
 	c.Set(userCtx, userId)
 	c.Set(roleCtx, role)
 }

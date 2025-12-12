@@ -33,7 +33,6 @@ func (s *seqWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// Global Logger setup
 func New(level string, seqURL string) *zerolog.Logger {
 	var l zerolog.Level
 
@@ -59,7 +58,7 @@ func New(level string, seqURL string) *zerolog.Logger {
 			url:    seqURL,
 			client: &http.Client{Timeout: 2 * time.Second},
 		}
-		// MultiWriter пишет сразу в два места
+
 		multi := zerolog.MultiLevelWriter(consoleWriter, seqW)
 		logger := zerolog.New(multi).With().Timestamp().Logger()
 		return &logger

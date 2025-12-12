@@ -37,10 +37,12 @@ type Categories interface {
 	Create(category domain.Category) error
 	GetAll() ([]domain.Category, error)
 	GetByID(id uint) (domain.Category, error)
+	Update(id uint, category domain.Category) error
+	Delete(id uint) error
 }
 
 type Orders interface {
-	Create(userID uint, inputOrder domain.Order) error // inputOrder содержит список Items
+	Create(userID uint, inputOrder domain.Order) error
 	GetAllByUserID(userID uint) ([]domain.Order, error)
 }
 

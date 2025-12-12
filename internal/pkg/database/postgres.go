@@ -30,7 +30,6 @@ func New(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Автоматическая миграция (создание таблиц)
 	err = db.AutoMigrate(
 		&domain.User{},
 		&domain.Profile{},

@@ -25,29 +25,29 @@ func (s *OrdersService) Create(userID uint, order domain.Order) error {
 
 	// Проходимся по товарам, которые хочет купить пользователь
 	for _, item := range order.Items {
-		// 1. Получаем актуальную цену товара из БД
+		// Получаем актуальную цену товара из БД
 		product, err := s.productRepo.GetByID(item.ProductID)
 		if err != nil {
 			return errors.New("product not found")
 		}
 
-		// 2. Проверяем наличие на складе (опционально)
+		// Проверяем наличие на складе (опционально)
 		if product.Stock < item.Quantity {
 			return errors.New("not enough stock for product: " + product.Name)
 		}
 
-		// 3. Формируем позицию заказа с актуальной ценой
+		// Формируем позицию заказа с актуальной ценой
 		orderItem := domain.OrderItem{
 			ProductID: product.ID,
 			Quantity:  item.Quantity,
-			Price:     product.Price, // Фиксируем цену на момент покупки
+			Price:     product.Price,
 		}
 
 		// Считаем сумму
 		totalPrice += product.Price * float64(item.Quantity)
 		orderItems = append(orderItems, orderItem)
 
-		// Здесь можно добавить логику уменьшения Stock у товара
+		// Уменьшаем Stock у товара
 		product.Stock -= item.Quantity
 		err = s.productRepo.Update(product)
 		if err != nil {
@@ -59,7 +59,6 @@ func (s *OrdersService) Create(userID uint, order domain.Order) error {
 		return errors.New("order is empty")
 	}
 
-	// Собираем итоговый заказ
 	newOrder := domain.Order{
 		UserID:     userID,
 		Items:      orderItems,

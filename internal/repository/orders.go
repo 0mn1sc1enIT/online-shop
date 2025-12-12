@@ -20,7 +20,6 @@ func (r *OrdersRepo) Create(order *domain.Order) error {
 
 func (r *OrdersRepo) GetAllByUserID(userID uint) ([]domain.Order, error) {
 	var orders []domain.Order
-	// Загружаем заказы + позиции заказа + информацию о товарах внутри позиций
 	err := r.db.Preload("Items.Product").Where("user_id = ?", userID).Find(&orders).Error
 	return orders, err
 }

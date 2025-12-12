@@ -29,8 +29,8 @@ type LoggerConfig struct {
 }
 
 type AuthConfig struct {
-	JWTSecret string
-	TokenTTL  string
+	JWTSecret string `mapstructure:"jwt_secret"`
+	TokenTTL  string `mapstructure:"token_ttl"`
 }
 
 func LoadConfig() (*Config, error) {

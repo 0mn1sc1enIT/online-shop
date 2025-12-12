@@ -33,14 +33,12 @@ type tokenClaims struct {
 }
 
 func (s *AuthService) CreateUser(user domain.User) (uint, error) {
-	// 1. Хешируем пароль
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return 0, err
 	}
 	user.Password = string(passwordHash)
 
-	// 2. Сохраняем в БД
 	if err := s.repo.Create(&user); err != nil {
 		return 0, err
 	}
@@ -49,18 +47,15 @@ func (s *AuthService) CreateUser(user domain.User) (uint, error) {
 }
 
 func (s *AuthService) GenerateToken(email, password string) (string, error) {
-	// 1. Ищем пользователя
 	user, err := s.repo.GetByEmail(email)
 	if err != nil {
 		return "", errors.New("user not found")
 	}
 
-	// 2. Сверяем хеши паролей
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return "", errors.New("invalid password")
 	}
 
-	// 3. Создаем JWT токен
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.tokenTTL)),
