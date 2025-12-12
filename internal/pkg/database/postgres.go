@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/OmniscienIT/GolangAPI/config"
 	"github.com/OmniscienIT/GolangAPI/internal/domain"
@@ -27,7 +26,7 @@ func New(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
 	err = db.AutoMigrate(
@@ -43,6 +42,5 @@ func New(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	log.Println("Database connection established and migrations applied.")
 	return db, nil
 }

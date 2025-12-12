@@ -31,7 +31,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/sign-in", h.signIn)
 	}
 
-	// Группа API (Приватная - нужен токен)
+	// Группа API (Приватная)
 	api := router.Group("/api", h.userIdentity)
 	{
 		// Товары

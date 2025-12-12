@@ -16,7 +16,9 @@ func (h *Handler) signUp(c *gin.Context) {
 	var input signUpInput
 
 	if err := c.BindJSON(&input); err != nil {
-		h.logger.Error().Err(err).Msg("failed to bind json")
+		h.logger.Warn().
+			Err(err).
+			Msg("SignUp: invalid input body")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -26,9 +28,18 @@ func (h *Handler) signUp(c *gin.Context) {
 		Password: input.Password,
 	})
 	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("email", input.Email).
+			Msg("SignUp: failed to create user")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.logger.Info().
+		Uint("user_id", id).
+		Str("email", input.Email).
+		Msg("SignUp: user registered successfully")
 
 	c.JSON(http.StatusOK, gin.H{"id": id})
 }
@@ -42,15 +53,26 @@ func (h *Handler) signIn(c *gin.Context) {
 	var input signInInput
 
 	if err := c.BindJSON(&input); err != nil {
+		h.logger.Warn().
+			Err(err).
+			Msg("SignIn: invalid input body")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	token, err := h.services.Authorization.GenerateToken(input.Email, input.Password)
 	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Str("email", input.Email).
+			Msg("SignIn: authentication failed")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.logger.Info().
+		Str("email", input.Email).
+		Msg("SignIn: successful login")
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }

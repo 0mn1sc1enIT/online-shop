@@ -3,14 +3,19 @@ package service
 import (
 	"github.com/OmniscienIT/GolangAPI/internal/domain"
 	"github.com/OmniscienIT/GolangAPI/internal/repository"
+	"github.com/rs/zerolog"
 )
 
 type CategoriesService struct {
-	repo repository.Categories
+	repo   repository.Categories
+	logger *zerolog.Logger
 }
 
-func NewCategoriesService(repo repository.Categories) *CategoriesService {
-	return &CategoriesService{repo: repo}
+func NewCategoriesService(repo repository.Categories, logger *zerolog.Logger) *CategoriesService {
+	return &CategoriesService{
+		repo:   repo,
+		logger: logger,
+	}
 }
 
 func (s *CategoriesService) Create(category domain.Category) error {
@@ -32,6 +37,10 @@ func (s *CategoriesService) GetByID(id uint) (domain.Category, error) {
 func (s *CategoriesService) Update(id uint, category domain.Category) error {
 	_, err := s.repo.GetByID(id)
 	if err != nil {
+		s.logger.Warn().
+			Uint("category_id", id).
+			Err(err).
+			Msg("Update category failed: not found")
 		return err
 	}
 

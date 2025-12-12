@@ -24,25 +24,39 @@ func main() {
 	}
 
 	appLogger := logger.New(cfg.Logger.Level, cfg.Logger.SeqURL)
-	appLogger.Info().Msg("Starting API...")
+
+	appLogger.Info().
+		Str("env", cfg.Server.Mode).
+		Msg("Starting API...")
 
 	db, err := database.New(cfg.Database)
 	if err != nil {
-		appLogger.Fatal().Err(err).Msg("Failed to connect to database")
+		appLogger.Fatal().
+			Err(err).
+			Str("db_host", cfg.Database.Host).
+			Msg("Failed to connect to database")
 	}
 
-	repos := repository.NewRepositories(db)
+	appLogger.Info().
+		Str("db_name", cfg.Database.DBName).
+		Msg("Database connection established successfully")
+
+	repos := repository.NewRepositories(db, appLogger)
 
 	tokenTTL, err := time.ParseDuration(cfg.Auth.TokenTTL)
 	if err != nil {
-		appLogger.Warn().Msg("Failed to parse TokenTTL from config, using default 24h")
+		appLogger.Warn().
+			Err(err).
+			Msg("Failed to parse TokenTTL from config, using default 24h")
 		tokenTTL = 24 * time.Hour
 	}
 	services := service.NewServices(service.Deps{
 		Repos:     repos,
 		TokenTTL:  tokenTTL,
 		SignedKey: cfg.Auth.JWTSecret,
+		Logger:    appLogger,
 	})
+	appLogger.Debug().Msg("Services and Repositories initialized")
 
 	handlers := transport.NewHandler(services, appLogger)
 
@@ -53,23 +67,31 @@ func main() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			appLogger.Fatal().Err(err).Msg("Failed to start server")
+			appLogger.Fatal().
+				Err(err).
+				Msg("Failed to start server")
 		}
 	}()
 
-	appLogger.Info().Msgf("Server started on port %s", cfg.Server.Port)
+	appLogger.Info().
+		Str("port", cfg.Server.Port).
+		Msg("Server started")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-	<-quit
+	sig := <-quit
 
-	appLogger.Info().Msg("Shutting down server...")
+	appLogger.Info().
+		Str("signal", sig.String()).
+		Msg("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		appLogger.Error().Err(err).Msg("Server forced to shutdown")
+		appLogger.Error().
+			Err(err).
+			Msg("Server forced to shutdown")
 	}
 
 	appLogger.Info().Msg("Server exited properly")

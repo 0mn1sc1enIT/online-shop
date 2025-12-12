@@ -26,7 +26,12 @@ type updateProductInput struct {
 
 func (h *Handler) createProduct(c *gin.Context) {
 	var input createProductInput
+
 	if err := c.BindJSON(&input); err != nil {
+		h.logger.Warn().
+			Err(err).
+			Msg("CreateProduct: invalid input body")
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -38,11 +43,21 @@ func (h *Handler) createProduct(c *gin.Context) {
 		Stock:       input.Stock,
 		CategoryID:  input.CategoryID,
 	})
-
 	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("name", input.Name).
+			Uint("category_id", input.CategoryID).
+			Msg("CreateProduct: failed to create product")
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.logger.Info().
+		Str("name", input.Name).
+		Uint("category_id", input.CategoryID).
+		Msg("CreateProduct: product created successfully")
 
 	c.JSON(http.StatusOK, gin.H{"status": "created"})
 }
@@ -50,37 +65,80 @@ func (h *Handler) createProduct(c *gin.Context) {
 func (h *Handler) getAllProducts(c *gin.Context) {
 	products, err := h.services.Products.GetAll()
 	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Msg("GetAllProducts: failed to retrieve products")
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.logger.Info().
+		Int("count", len(products)).
+		Msg("GetAllProducts: products retrieved successfully")
+
 	c.JSON(http.StatusOK, products)
 }
 
 func (h *Handler) getProductById(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Str("id", c.Param("id")).
+			Msg("GetProductById: invalid id param")
+
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		return
+	}
+
 	product, err := h.services.Products.GetByID(uint(id))
 	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Int("product_id", id).
+			Msg("GetProductById: product not found")
+
 		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 		return
 	}
+
+	h.logger.Info().
+		Int("product_id", id).
+		Msg("GetProductById: product retrieved successfully")
+
 	c.JSON(http.StatusOK, product)
 }
 
 func (h *Handler) updateProduct(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Str("id", c.Param("id")).
+			Msg("UpdateProduct: invalid id param")
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
 		return
 	}
 
 	var input updateProductInput
 	if err := c.BindJSON(&input); err != nil {
+		h.logger.Warn().
+			Err(err).
+			Msg("UpdateProduct: invalid input body")
+
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	existingProduct, err := h.services.Products.GetByID(uint(id))
 	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Int("product_id", id).
+			Msg("UpdateProduct: product not found")
+
 		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
 		return
 	}
@@ -103,19 +161,48 @@ func (h *Handler) updateProduct(c *gin.Context) {
 
 	err = h.services.Products.Update(uint(id), existingProduct)
 	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Int("product_id", id).
+			Msg("UpdateProduct: failed to update product")
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.logger.Info().
+		Int("product_id", id).
+		Msg("UpdateProduct: product updated successfully")
 
 	c.JSON(http.StatusOK, gin.H{"status": "updated", "product": existingProduct})
 }
 
 func (h *Handler) deleteProduct(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	err := h.services.Products.Delete(uint(id))
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Str("id", c.Param("id")).
+			Msg("DeleteProduct: invalid id param")
+
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id param"})
+		return
+	}
+
+	err = h.services.Products.Delete(uint(id))
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Int("product_id", id).
+			Msg("DeleteProduct: failed to delete product")
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.logger.Info().
+		Int("product_id", id).
+		Msg("DeleteProduct: product deleted successfully")
+
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }

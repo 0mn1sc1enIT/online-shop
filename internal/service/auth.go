@@ -7,6 +7,7 @@ import (
 
 	"github.com/OmniscienIT/GolangAPI/internal/domain"
 	"github.com/OmniscienIT/GolangAPI/internal/repository"
+	"github.com/rs/zerolog"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -16,13 +17,15 @@ type AuthService struct {
 	repo      repository.Users
 	tokenTTL  time.Duration
 	signedKey string
+	logger    *zerolog.Logger
 }
 
-func NewAuthService(repo repository.Users, signedKey string, tokenTTL time.Duration) *AuthService {
+func NewAuthService(repo repository.Users, signedKey string, tokenTTL time.Duration, logger *zerolog.Logger) *AuthService {
 	return &AuthService{
 		repo:      repo,
 		signedKey: signedKey,
 		tokenTTL:  tokenTTL,
+		logger:    logger,
 	}
 }
 
@@ -33,8 +36,10 @@ type tokenClaims struct {
 }
 
 func (s *AuthService) CreateUser(user domain.User) (uint, error) {
+	// Логируем ошибку хеширования (это критично)
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("Failed to generate password hash")
 		return 0, err
 	}
 	user.Password = string(passwordHash)
@@ -49,10 +54,17 @@ func (s *AuthService) CreateUser(user domain.User) (uint, error) {
 func (s *AuthService) GenerateToken(email, password string) (string, error) {
 	user, err := s.repo.GetByEmail(email)
 	if err != nil {
+		s.logger.Warn().
+			Str("email", email).
+			Msg("Login attempt: user not found")
 		return "", errors.New("user not found")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		s.logger.Warn().
+			Str("email", email).
+			Uint("user_id", user.ID).
+			Msg("Login attempt: invalid password")
 		return "", errors.New("invalid password")
 	}
 
@@ -65,7 +77,17 @@ func (s *AuthService) GenerateToken(email, password string) (string, error) {
 		Role:   user.Role,
 	})
 
-	return token.SignedString([]byte(s.signedKey))
+	tokenString, err := token.SignedString([]byte(s.signedKey))
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Failed to sign token")
+		return "", err
+	}
+
+	s.logger.Debug().
+		Uint("user_id", user.ID).
+		Msg("User logged in, token generated")
+
+	return tokenString, nil
 }
 
 func (s *AuthService) ParseToken(accessToken string) (uint, string, error) {
@@ -77,6 +99,8 @@ func (s *AuthService) ParseToken(accessToken string) (uint, string, error) {
 	})
 
 	if err != nil {
+		// Ошибки парсинга токена (истек, неверная подпись)
+		// Можно ставить Debug, чтобы не спамить в логи, если токен просто протух
 		return 0, "", err
 	}
 

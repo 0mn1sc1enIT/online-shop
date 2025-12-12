@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/OmniscienIT/GolangAPI/internal/domain"
+	"github.com/rs/zerolog"
 
 	"gorm.io/gorm"
 )
@@ -51,13 +52,14 @@ type Repositories struct {
 	Orders     Orders
 }
 
-// Конструктор
-func NewRepositories(db *gorm.DB) *Repositories {
+// NewRepositories теперь принимает logger
+func NewRepositories(db *gorm.DB, logger *zerolog.Logger) *Repositories {
 	return &Repositories{
-		Users:      NewUsersRepo(db),
-		Profiles:   NewProfilesRepo(db),
-		Categories: NewCategoriesRepo(db),
-		Products:   NewProductsRepo(db),
-		Orders:     NewOrdersRepo(db),
+		// Передаем логгер в каждый репозиторий
+		Users:      NewUsersRepo(db, logger),
+		Profiles:   NewProfilesRepo(db, logger),
+		Categories: NewCategoriesRepo(db, logger),
+		Products:   NewProductsRepo(db, logger),
+		Orders:     NewOrdersRepo(db, logger),
 	}
 }

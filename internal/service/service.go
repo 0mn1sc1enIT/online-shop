@@ -5,6 +5,7 @@ import (
 
 	"github.com/OmniscienIT/GolangAPI/internal/domain"
 	"github.com/OmniscienIT/GolangAPI/internal/repository"
+	"github.com/rs/zerolog"
 )
 
 // Структура для входных данных авторизации
@@ -58,14 +59,16 @@ type Deps struct {
 	Repos     *repository.Repositories
 	TokenTTL  time.Duration
 	SignedKey string
+	Logger    *zerolog.Logger // <-- Добавляем логгер в зависимости
 }
 
 // Конструктор сервисов
 func NewServices(deps Deps) *Service {
 	return &Service{
-		Authorization: NewAuthService(deps.Repos.Users, deps.SignedKey, deps.TokenTTL),
-		Products:      NewProductsService(deps.Repos.Products, deps.Repos.Categories),
-		Categories:    NewCategoriesService(deps.Repos.Categories),
-		Orders:        NewOrdersService(deps.Repos.Orders, deps.Repos.Products),
+		// Передаем deps.Logger в каждый сервис
+		Authorization: NewAuthService(deps.Repos.Users, deps.SignedKey, deps.TokenTTL, deps.Logger),
+		Products:      NewProductsService(deps.Repos.Products, deps.Repos.Categories, deps.Logger),
+		Categories:    NewCategoriesService(deps.Repos.Categories, deps.Logger),
+		Orders:        NewOrdersService(deps.Repos.Orders, deps.Repos.Products, deps.Logger),
 	}
 }
