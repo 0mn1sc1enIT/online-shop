@@ -14,7 +14,7 @@ type User struct {
 	Orders   []Order `json:"orders,omitempty"`
 }
 
-// Информация о пользователе (1 к 1 с User)
+// Информация о пользователе
 type Profile struct {
 	gorm.Model
 	UserID    uint   `gorm:"uniqueIndex;not null" json:"user_id"`
@@ -24,7 +24,7 @@ type Profile struct {
 	Phone     string `json:"phone"`
 }
 
-// Категория товара (1 ко многим с Product)
+// Категория товара
 type Category struct {
 	gorm.Model
 	Name     string    `gorm:"unique;not null" json:"name"`
@@ -52,7 +52,7 @@ type Order struct {
 	Items      []OrderItem `json:"items"`
 }
 
-// Позиция в заказе (промежуточная таблица для M:M)
+// Позиция в заказе
 type OrderItem struct {
 	gorm.Model
 	OrderID   uint    `json:"order_id"`

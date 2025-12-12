@@ -8,7 +8,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Структура для входных данных авторизации
 type SignUpInput struct {
 	Email    string
 	Password string
@@ -19,7 +18,6 @@ type SignInInput struct {
 	Password string
 }
 
-// Интерфейсы
 type Authorization interface {
 	CreateUser(user domain.User) (uint, error)
 	GenerateToken(email, password string) (string, error)
@@ -47,7 +45,6 @@ type Orders interface {
 	GetAllByUserID(userID uint) ([]domain.Order, error)
 }
 
-// Service собирает все интерфейсы
 type Service struct {
 	Authorization
 	Products
@@ -59,13 +56,11 @@ type Deps struct {
 	Repos     *repository.Repositories
 	TokenTTL  time.Duration
 	SignedKey string
-	Logger    *zerolog.Logger // <-- Добавляем логгер в зависимости
+	Logger    *zerolog.Logger
 }
 
-// Конструктор сервисов
 func NewServices(deps Deps) *Service {
 	return &Service{
-		// Передаем deps.Logger в каждый сервис
 		Authorization: NewAuthService(deps.Repos.Users, deps.SignedKey, deps.TokenTTL, deps.Logger),
 		Products:      NewProductsService(deps.Repos.Products, deps.Repos.Categories, deps.Logger),
 		Categories:    NewCategoriesService(deps.Repos.Categories, deps.Logger),

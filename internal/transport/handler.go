@@ -24,14 +24,14 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// Группа Auth (Публичная)
+	// Публичная
 	auth := router.Group("/auth")
 	{
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
 	}
 
-	// Группа API (Приватная)
+	// Приватная
 	api := router.Group("/api", h.userIdentity)
 	{
 		// Товары

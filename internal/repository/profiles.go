@@ -36,7 +36,6 @@ func (r *ProfilesRepo) Create(profile *domain.Profile) error {
 }
 
 func (r *ProfilesRepo) Update(profile *domain.Profile) error {
-	// Сохраняем все поля
 	if err := r.db.Save(profile).Error; err != nil {
 		r.logger.Error().
 			Err(err).

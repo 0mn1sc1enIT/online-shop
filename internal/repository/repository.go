@@ -43,7 +43,6 @@ type Orders interface {
 	UpdateStatus(id uint, status string) error
 }
 
-// Repositories - структура, собирающая все репозитории
 type Repositories struct {
 	Users      Users
 	Profiles   Profiles
@@ -52,10 +51,8 @@ type Repositories struct {
 	Orders     Orders
 }
 
-// NewRepositories теперь принимает logger
 func NewRepositories(db *gorm.DB, logger *zerolog.Logger) *Repositories {
 	return &Repositories{
-		// Передаем логгер в каждый репозиторий
 		Users:      NewUsersRepo(db, logger),
 		Profiles:   NewProfilesRepo(db, logger),
 		Categories: NewCategoriesRepo(db, logger),
